@@ -58,6 +58,7 @@ int main() {
 
 /* IMPROVING TEMPLATE
 struct Process {
+  int id;
   int pid;
   char path[100];
   clock_t begin;
@@ -87,6 +88,7 @@ int main () {
 
   fgets(line, sizeof(line), file);
   sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
+  processes[processIndex].id = processIndex + 1;
   processes[processIndex].pid = fork();
   if (processes[processIndex].pid == 0) {
     execl(processes[processIndex].path, NULL);
@@ -125,24 +127,22 @@ int main () {
     if (!feof(file)) {
       fgets(line, sizeof(line), file);
       sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
+      processes[processIndex].begin = clock();
+      processes[processIndex].id = processIndex + 1;
+      processIndex++;
     }
 
     if (seconds == 6) {
       kill(currentlyRunning, SIGTSTP);
-      chosenProcess = scheduler(processes, processIndex);
+      chosenProcess = scheduler(processes, processIndex); // returns Process
       if (hasPID(processes, processIndex, chosenProcess)) {
-        kill(chosenProcess, SIGCONT);
+        kill(chosenProcess.pid, SIGCONT);
       } else {
-        fgets(line, sizeof(line), file);
-        sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
-        processes[processIndex].pid = fork();
-        if (processes[processIndex].pid == 0) {
-          execl(processes[processIndex].path, NULL);
-        } else if (processes[processIndex].pid > 0) {
-          processes[processIndex].begin = clock();
-          currentlyRunning = processes[processIndex].pid;
-          processIndex++;
-          waitpid(processes[processIndex].pid, &processes[processIndex].status, WNOHANG);
+        chosenProcess.pid = fork();
+        if (chosenProcess.pid == 0) {
+          execl(chosenProcess.path, NULL);
+        } else if (chosenProcess.pid > 0) {
+          currentlyRunning = chosenProcess.pid;
         }
       }
     }
@@ -153,9 +153,9 @@ int main () {
   return 0;
 }
 
-bool hasPID(Process processes[], int index, int pid) {
+bool hasPID(Process processes[], int index, Process chosenProcess) {
   for (int i = 0; i < index; i++) {
-    if (processes[i].pid == pid && pid > 0) {
+    if (processes[i].id == chosenProcess.id && chosenProcess.pid > 0) {
       return true;
       break;
     }
