@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <time.h>
 
 void escalonador() {
   // Implemente o escalonador de loteria aqui
@@ -54,6 +55,115 @@ int main() {
 
   return 0;
 }
+
+/* IMPROVING TEMPLATE
+struct Process {
+  int pid;
+  char path[100];
+  clock_t begin;
+  double timeInSec;
+  int priority;
+  int state;
+  bool isCompleted;
+}
+
+bool hasPID(Process [], int, int);
+
+int main () {
+  FILE *file;
+  char line[100];
+  int seconds = 0;
+  clock_t begin;
+  double timeSpent = 0.0;
+  struct Process processes[100];
+  int processIndex = 0;
+  int currentlyRunning;
+  int chosenProcess;
+
+  file = fopen("file.txt", "r");
+
+  if (file == NULL)
+    return 1;
+
+  fgets(line, sizeof(line), file);
+  sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
+  processes[processIndex].pid = fork();
+  if (processes[processIndex].pid == 0) {
+    execl(processes[processIndex].path, NULL);
+  } else if (processes[processIndex].pid > 0) {
+    processes[processIndex].begin = clock();
+    currentlyRunning = processes[processIndex].pid;
+    processIndex++;
+    processes[processIndex].isCompleted = false;
+  }
+
+  while (true) {
+    begin = clock();
+    while (true) {
+      bool checkedOneSec = false;
+      timeSpent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+      if (timeSpent >= 1.0 && !checkedOneSec) {
+        if (waitpid(currentlyRunning, &processes[currentlyRunning].status, WNOHANG) != 0) {
+          processes[currentlyRunning].isCompleted = true;
+          processes[currentlyRunning].timeInSec = (double)(clock() - processes[currentlyRunning].begin) / CLOCKS_PER_SEC;
+          break;
+        }
+
+        checkedOneSec = true;
+      }
+      if (timeSpent >= 2.0) {
+        if (waitpid(currentlyRunning, &processes[currentlyRunning].status, WNOHANG) != 0) {
+          processes[currentlyRunning].isCompleted = true;
+          processes[currentlyRunning].timeInSec = (double)(clock() - processes[currentlyRunning].begin) / CLOCKS_PER_SEC;
+        }
+
+        break;
+      }
+    }
+    seconds += 2;
+
+    if (!feof(file)) {
+      fgets(line, sizeof(line), file);
+      sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
+    }
+
+    if (seconds == 6) {
+      kill(currentlyRunning, SIGTSTP);
+      chosenProcess = scheduler(processes, processIndex);
+      if (hasPID(processes, processIndex, chosenProcess)) {
+        kill(chosenProcess, SIGCONT);
+      } else {
+        fgets(line, sizeof(line), file);
+        sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
+        processes[processIndex].pid = fork();
+        if (processes[processIndex].pid == 0) {
+          execl(processes[processIndex].path, NULL);
+        } else if (processes[processIndex].pid > 0) {
+          processes[processIndex].begin = clock();
+          currentlyRunning = processes[processIndex].pid;
+          processIndex++;
+          waitpid(processes[processIndex].pid, &processes[processIndex].status, WNOHANG);
+        }
+      }
+    }
+  }
+
+  fclose(file);
+
+  return 0;
+}
+
+bool hasPID(Process processes[], int index, int pid) {
+  for (int i = 0; i < index; i++) {
+    if (processes[i].pid == pid && pid > 0) {
+      return true;
+      break;
+    }
+  }
+
+  return false;
+}
+*/
 
 // como parar a execução de um processo
 //  kill -9 PID SIGTSTP
