@@ -58,3 +58,32 @@ int main() {
 // como parar a execução de um processo
 //  kill -9 PID SIGTSTP
 //  kill -9 PID SIGSTOP
+
+/*
+ * Esqueleto 2
+ *
+ *main() {
+        abre arquivo
+        fork e exec arquivo (pega pid)
+        segundos = 0
+        for (2sec) {
+                skip primeira exec
+                le linha do arquivo
+                armazena info do proximo processo e prioridade
+                adiciona processo na fila ready
+
+                soma 2 em segundos
+                segundos == 6 {
+                        sigtstp no pid
+                        roda escalonador
+                        fork e exec arquivo
+                }
+        }
+}
+
+escalonador() {
+        lottery ticket scheduler
+}
+ *
+ *
+ * */
