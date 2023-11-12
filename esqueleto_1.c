@@ -56,7 +56,7 @@ int main() {
   return 0;
 }
 
-/* IMPROVING TEMPLATE
+/* IMPROVING TEMPLATE (Missing scheduler and check if all processes finished running, and print)
 struct Process {
   int id;
   int pid;
@@ -68,7 +68,7 @@ struct Process {
   bool isCompleted;
 }
 
-bool hasPID(Process [], int, int);
+bool hasPID(Process [], int, Process);
 
 int main () {
   FILE *file;
