@@ -69,6 +69,7 @@ struct Process {
 }
 
 bool hasPID(Process [], int, Process);
+Process lotteryScheduler(Process [], int);
 
 int main () {
   FILE *file;
@@ -153,8 +154,8 @@ int main () {
   return 0;
 }
 
-bool hasPID(Process processes[], int index, Process chosenProcess) {
-  for (int i = 0; i < index; i++) {
+bool hasPID(Process processes[], int qty, Process chosenProcess) {
+  for (int i = 0; i < qty; i++) {
     if (processes[i].id == chosenProcess.id && chosenProcess.pid > 0) {
       return true;
       break;
@@ -162,6 +163,25 @@ bool hasPID(Process processes[], int index, Process chosenProcess) {
   }
 
   return false;
+}
+
+Process lotteryScheduler(Process processes[], int qty) {
+  int totalTickets = 0;
+  for (int i = 0; i < qty; i++)
+    totalTickets += processes[i].priority + 1;
+
+  int ticket = (rand() % totalTickets) + 1;
+
+  Process chosenProcess = NULL;
+  for (int i = 0; i < totalTickets; i++) {
+    ticket -= processes[i].priority + 1;
+    if (ticket <= 0) {
+      chosenProcess = processes[i];
+      break;
+    }
+  }
+
+  return chosenProcess;
 }
 */
 
