@@ -56,7 +56,7 @@ int main() {
   return 0;
 }
 
-/* IMPROVING TEMPLATE (Missing scheduler and check if all processes finished running, and print)
+/* IMPROVING TEMPLATE
 struct Process {
   int id;
   int pid;
@@ -70,6 +70,9 @@ struct Process {
 
 bool hasPID(Process [], int, Process);
 Process lotteryScheduler(Process [], int);
+bool hasAllProcessesCompleted(Process [], int);
+int getProcessIndex(Process [], int, Process);
+void printAllProcessesTimes(Process [], int);
 
 int main () {
   FILE *file;
@@ -81,6 +84,8 @@ int main () {
   int processIndex = 0;
   int currentlyRunning;
   int chosenProcess;
+  clock_t beginMakeSpan;
+  double makeSpan = 0.0;
 
   file = fopen("file.txt", "r");
 
@@ -91,6 +96,7 @@ int main () {
   sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
   processes[processIndex].id = processIndex + 1;
   processes[processIndex].pid = fork();
+  beginMakeSpan = clock();
   if (processes[processIndex].pid == 0) {
     execl(processes[processIndex].path, NULL);
   } else if (processes[processIndex].pid > 0) {
@@ -101,6 +107,9 @@ int main () {
   }
 
   while (true) {
+    if (hasAllProcessesCompleted(processes, processIndex))
+      break;
+
     begin = clock();
     while (true) {
       bool checkedOneSec = false;
@@ -135,23 +144,34 @@ int main () {
 
     if (seconds == 6) {
       kill(currentlyRunning, SIGTSTP);
-      chosenProcess = scheduler(processes, processIndex); // returns Process
+      chosenProcess = lotteryScheduler(processes, processIndex); // returns Process
+      int index = getProcessIndex(processes, processIndex, chosenProcess);
       if (hasPID(processes, processIndex, chosenProcess)) {
         kill(chosenProcess.pid, SIGCONT);
       } else {
-        chosenProcess.pid = fork();
-        if (chosenProcess.pid == 0) {
-          execl(chosenProcess.path, NULL);
-        } else if (chosenProcess.pid > 0) {
-          currentlyRunning = chosenProcess.pid;
+        processes[index].pid = fork();
+        if (processes[index].pid == 0) {
+          execl(processes[index].path, NULL);
+        } else if (processes[index].pid > 0) {
+          currentlyRunning = processes[index].pid;
         }
       }
     }
   }
 
+  makeSpan = (double)(clock() - beginMakeSpan);
+  printf("MakeSpan: %f seconds\n", makeSpan);
+
+  printAllProcessesTimes(processes, processIndex);
+
   fclose(file);
 
   return 0;
+}
+
+void printAllProcessesTimes(Processes processes[], int qty) {
+  for (int i = 0; i < qty; i++)
+    printf("Process %d took %f seconds\n", processes[i].id, processes[i].timeInSec);
 }
 
 bool hasPID(Process processes[], int qty, Process chosenProcess) {
@@ -167,13 +187,17 @@ bool hasPID(Process processes[], int qty, Process chosenProcess) {
 
 Process lotteryScheduler(Process processes[], int qty) {
   int totalTickets = 0;
-  for (int i = 0; i < qty; i++)
+  for (int i = 0; i < qty; i++) {
+    if (processes[i].isCompleted) continue;
     totalTickets += processes[i].priority + 1;
+  }
 
   int ticket = (rand() % totalTickets) + 1;
 
   Process chosenProcess = NULL;
   for (int i = 0; i < totalTickets; i++) {
+    if (processes[i].isCompleted) continue;
+
     ticket -= processes[i].priority + 1;
     if (ticket <= 0) {
       chosenProcess = processes[i];
@@ -182,6 +206,28 @@ Process lotteryScheduler(Process processes[], int qty) {
   }
 
   return chosenProcess;
+}
+
+bool hasAllProcessesCompleted(Process processes[], int qty) {
+  let i = 0;
+
+  for (i = 0; i < qty; i++) 
+    if (!processes[i].isCompleted)
+      break;
+
+  if (i == (qty - 1))
+    return false;
+
+  return true;
+}
+
+int getProcessIndex(Process processes[], int qty, Process process) {
+  int i = 0;
+  for (i = 0; i < qty; i++)
+    if (processes[i].id == process.id)
+      break;
+
+  return i;
 }
 */
 
