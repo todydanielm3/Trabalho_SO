@@ -23,7 +23,7 @@ struct Process lotteryScheduler(struct Process [], int);
 bool hasAllProcessesCompleted(struct Process [], int);
 int getProcessIndex(struct Process [], int, struct Process);
 void printAllProcessesTimes(struct Process [], int);
-int getProcessWithPid(struct Process [], int , int);
+int getProcessIndexWithPID(struct Process [], int , int);
 
 int main () {
   FILE *file;
@@ -36,8 +36,6 @@ int main () {
   int processIndex = 0;
   int currentlyRunning;
   struct Process chosenProcess;
-  clock_t beginMakeSpan;
-  double makeSpan = 0.0;
 
   file = fopen("file.txt", "r");
 
@@ -48,12 +46,8 @@ int main () {
   sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
   processes[processIndex].id = processIndex + 1;
   processes[processIndex].pid = fork();
-  beginMakeSpan = clock();
   if (processes[processIndex].pid == 0) {
-    strcpy(path, "./");
-    strcat(path, processes[processIndex].path);
-    char *args[]={path,NULL};
-    execvp(args[0],args);
+    execl(processes[processIndex].path, processes[processIndex].path, NULL);
   } else if (processes[processIndex].pid > 0) {
     processes[processIndex].begin = clock();
     currentlyRunning = processes[processIndex].pid;
@@ -64,33 +58,30 @@ int main () {
   while (1) {
     begin = clock();
     bool checkedOneSec = false;
-    int i = getProcessWithPid(processes, processIndex, currentlyRunning);
-    while (1) {
-      
+    int i = getProcessIndexWithPID(processes, processIndex, currentlyRunning);
+
+    do {
       timeSpent = (double)(clock() - begin) / CLOCKS_PER_SEC;
+
       if (timeSpent >= 1.0 && !checkedOneSec) {
         if (waitpid(currentlyRunning, &processes[i].status, WNOHANG) != 0) {
           processes[i].isCompleted = true;
           processes[i].timeInSec = (double)(clock() - processes[i].begin) / CLOCKS_PER_SEC;
-          break;
         }
 
         checkedOneSec = true;
       }
-      if (timeSpent >= 2.0) {
-        if (waitpid(currentlyRunning, &processes[i].status, WNOHANG) != 0) {
-          processes[i].isCompleted = true;
-          processes[i].timeInSec = (double)(clock() - processes[i].begin) / CLOCKS_PER_SEC;
-        }
 
-        break;
+      if (timeSpent >= 2.0 && waitpid(currentlyRunning, &processes[i].status, WNOHANG) != 0) {
+        processes[i].isCompleted = true;
+        processes[i].timeInSec = (double)(clock() - processes[i].begin) / CLOCKS_PER_SEC;
       }
-    }
-    if (hasAllProcessesCompleted(processes, processIndex)){
-        break;
-    }
-      
+    } while (timeSpent < 2.0);
+    
     seconds += 2;
+    if (hasAllProcessesCompleted(processes, processIndex))
+      break;
+    
     if (!feof(file)) {
       fgets(line, sizeof(line), file);
       sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
@@ -100,18 +91,22 @@ int main () {
     }
 
     if (seconds % 6 == 0) {
+      int index = getProcessIndexWithPID(processes, processIndex, currentlyRunning); 
+      if (waitpid(currentlyRunning, &processes[index].status, WNOHANG) != 0) {
+        processes[index].isCompleted = true;
+        processes[index].timeInSec = (double)(clock() - processes[index].begin) / CLOCKS_PER_SEC;
+      }
+
       kill(currentlyRunning, SIGTSTP);
-      chosenProcess = lotteryScheduler(processes, processIndex); // returns Process
-      int index = getProcessIndex(processes, processIndex, chosenProcess);
+      chosenProcess = lotteryScheduler(processes, processIndex);
+      index = getProcessIndex(processes, processIndex, chosenProcess);
       if (hasPID(processes, processIndex, chosenProcess)) {
-        kill(chosenProcess.pid, SIGCONT);
+        kill(processes[index].pid, SIGCONT);
+        currentlyRunning = processes[index].pid;
       } else {
         processes[index].pid = fork();
         if (processes[index].pid == 0) {
-          strcpy(path, "./");
-          strcat(path, processes[processIndex].path);
-          char *args[]={path,NULL};
-          execvp(args[0],args);
+          execl(processes[index].path, processes[index].path, NULL);
         } else if (processes[index].pid > 0) {
           currentlyRunning = processes[index].pid;
         }
@@ -119,9 +114,7 @@ int main () {
     }
   }
 
-  makeSpan = (double)(clock() - beginMakeSpan) / CLOCKS_PER_SEC;
-  printf("MakeSpan: %f seconds\n", makeSpan);
-
+  printf("MakeSpan: %d seconds\n", seconds);
   printAllProcessesTimes(processes, processIndex);
 
   fclose(file);
@@ -131,7 +124,7 @@ int main () {
 
 void printAllProcessesTimes(struct Process processes[], int qty) {
   for (int i = 0; i < qty; i++)
-    printf("Process %d took %f seconds\n", processes[i].id, processes[i].timeInSec);
+    printf("Process %d took %.0f\n", processes[i].id, processes[i].timeInSec);
 }
 
 bool hasPID(struct Process processes[], int qty, struct Process chosenProcess) {
@@ -155,7 +148,7 @@ struct Process lotteryScheduler(struct Process processes[], int qty) {
   int ticket = (rand() % totalTickets) + 1;
 
   struct Process chosenProcess;
-  for (int i = 0; i < totalTickets; i++) {
+  for (int i = 0; i < qty; i++) {
     if (processes[i].isCompleted) continue;
 
     ticket -= processes[i].priority + 1;
@@ -169,32 +162,25 @@ struct Process lotteryScheduler(struct Process processes[], int qty) {
 }
 
 bool hasAllProcessesCompleted(struct Process processes[], int qty) {
-  int i = 0;
-
-  for (i = 0; i < qty; i++) 
+  for (int i = 0; i < qty; i++) 
     if (!processes[i].isCompleted)
-      break;
-
-  if (i == (qty - 1))
-    return false;
+      return false;
 
   return true;
 }
 
 int getProcessIndex(struct Process processes[], int qty, struct Process process) {
-  int i = 0;
-  for (i = 0; i < qty; i++)
+  for (int i = 0; i < qty; i++)
     if (processes[i].id == process.id)
-      break;
+      return i;
 
-  return i;
+  return 0;
 }
 
-int getProcessWithPid(struct Process processes[], int qty, int pid){
-  int i = 0;
-  for (i = 0; i < qty; i++)
+int getProcessIndexWithPID(struct Process processes[], int qty, int pid){
+  for (int i = 0; i < qty; i++)
     if (processes[i].pid == pid)
-      break;
+      return i;
 
-  return i;
+  return 0;
 }
