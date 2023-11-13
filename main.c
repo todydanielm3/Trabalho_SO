@@ -119,7 +119,7 @@ int main () {
     }
   }
 
-  makeSpan = (double)(clock() - beginMakeSpan);
+  makeSpan = (double)(clock() - beginMakeSpan) / CLOCKS_PER_SEC;
   printf("MakeSpan: %f seconds\n", makeSpan);
 
   printAllProcessesTimes(processes, processIndex);
