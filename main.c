@@ -59,8 +59,10 @@ int main () {
     processIndex++;
     processes[processIndex].isCompleted = false;
   }
+  printf("Currently Running: %d\n", currentlyRunning);
 
   while (1) {
+    printf("Start While\n");
     if (hasAllProcessesCompleted(processes, processIndex))
       break;
 
@@ -87,7 +89,8 @@ int main () {
       }
     }
     seconds += 2;
-
+    printf("seconds: %d\n", seconds);
+    printf("feof: %d\n", feof(file));
     if (!feof(file)) {
       fgets(line, sizeof(line), file);
       sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
@@ -97,8 +100,10 @@ int main () {
     }
 
     if (seconds == 6) {
+      printf("Seconds: %d\n", seconds);
       kill(currentlyRunning, SIGTSTP);
       chosenProcess = lotteryScheduler(processes, processIndex); // returns Process
+      printf("Chosen Process: %s\n", chosenProcess.path);
       int index = getProcessIndex(processes, processIndex, chosenProcess);
       if (hasPID(processes, processIndex, chosenProcess)) {
         kill(chosenProcess.pid, SIGCONT);
