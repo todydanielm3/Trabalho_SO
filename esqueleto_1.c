@@ -77,6 +77,7 @@ void printAllProcessesTimes(Process [], int);
 int main () {
   FILE *file;
   char line[100];
+  char path[100];
   int seconds = 0;
   clock_t begin;
   double timeSpent = 0.0;
@@ -98,7 +99,8 @@ int main () {
   processes[processIndex].pid = fork();
   beginMakeSpan = clock();
   if (processes[processIndex].pid == 0) {
-    execl(processes[processIndex].path, NULL);
+    path = strcat("./", processes[processIndex].path);
+    execvp(path, path, NULL);
   } else if (processes[processIndex].pid > 0) {
     processes[processIndex].begin = clock();
     currentlyRunning = processes[processIndex].pid;
@@ -151,7 +153,8 @@ int main () {
       } else {
         processes[index].pid = fork();
         if (processes[index].pid == 0) {
-          execl(processes[index].path, NULL);
+          path = strcat("./", processes[processIndex].path);
+          execvp(path, path, NULL);
         } else if (processes[index].pid > 0) {
           currentlyRunning = processes[index].pid;
         }
