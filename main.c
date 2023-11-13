@@ -60,12 +60,8 @@ int main () {
     processIndex++;
     processes[processIndex].isCompleted = false;
   }
-  printf("Currently Running: %d\n", currentlyRunning);
 
   while (1) {
-    printf("Start While\n");
-    
-
     begin = clock();
     bool checkedOneSec = false;
     int i = getProcessWithPid(processes, processIndex, currentlyRunning);
@@ -73,9 +69,7 @@ int main () {
       
       timeSpent = (double)(clock() - begin) / CLOCKS_PER_SEC;
       if (timeSpent >= 1.0 && !checkedOneSec) {
-        printf("First check\n");
         if (waitpid(currentlyRunning, &processes[i].status, WNOHANG) != 0) {
-          printf("Second check\n");
           processes[i].isCompleted = true;
           processes[i].timeInSec = (double)(clock() - processes[i].begin) / CLOCKS_PER_SEC;
           break;
@@ -84,9 +78,7 @@ int main () {
         checkedOneSec = true;
       }
       if (timeSpent >= 2.0) {
-        printf("Third check\n");
         if (waitpid(currentlyRunning, &processes[i].status, WNOHANG) != 0) {
-            printf("Fourth check\n");
           processes[i].isCompleted = true;
           processes[i].timeInSec = (double)(clock() - processes[i].begin) / CLOCKS_PER_SEC;
         }
@@ -99,8 +91,6 @@ int main () {
     }
       
     seconds += 2;
-    printf("seconds: %d\n", seconds);
-    printf("feof: %d\n", feof(file));
     if (!feof(file)) {
       fgets(line, sizeof(line), file);
       sscanf(line, "%s %d", processes[processIndex].path, &processes[processIndex].priority);
@@ -110,10 +100,8 @@ int main () {
     }
 
     if (seconds % 6 == 0) {
-      printf("Seconds: %d\n", seconds);
       kill(currentlyRunning, SIGTSTP);
       chosenProcess = lotteryScheduler(processes, processIndex); // returns Process
-      printf("Chosen Process: %s\n", chosenProcess.path);
       int index = getProcessIndex(processes, processIndex, chosenProcess);
       if (hasPID(processes, processIndex, chosenProcess)) {
         kill(chosenProcess.pid, SIGCONT);
