@@ -23,6 +23,7 @@ struct Process lotteryScheduler(struct Process [], int);
 bool hasAllProcessesCompleted(struct Process [], int);
 int getProcessIndex(struct Process [], int, struct Process);
 void printAllProcessesTimes(struct Process [], int);
+int getProcessWithPid(struct Process [], int , int);
 
 int main () {
   FILE *file;
@@ -63,31 +64,40 @@ int main () {
 
   while (1) {
     printf("Start While\n");
-    if (hasAllProcessesCompleted(processes, processIndex))
-      break;
+    
 
     begin = clock();
+    bool checkedOneSec = false;
+    int i = getProcessWithPid(processes, processIndex, currentlyRunning);
     while (1) {
-      bool checkedOneSec = false;
+      
       timeSpent = (double)(clock() - begin) / CLOCKS_PER_SEC;
       if (timeSpent >= 1.0 && !checkedOneSec) {
-        if (waitpid(currentlyRunning, &processes[currentlyRunning].status, WNOHANG) != 0) {
-          processes[currentlyRunning].isCompleted = true;
-          processes[currentlyRunning].timeInSec = (double)(clock() - processes[currentlyRunning].begin) / CLOCKS_PER_SEC;
+        printf("First check\n");
+        if (waitpid(currentlyRunning, &processes[i].status, WNOHANG) != 0) {
+          printf("Second check\n");
+          processes[i].isCompleted = true;
+          processes[i].timeInSec = (double)(clock() - processes[i].begin) / CLOCKS_PER_SEC;
           break;
         }
 
         checkedOneSec = true;
       }
       if (timeSpent >= 2.0) {
-        if (waitpid(currentlyRunning, &processes[currentlyRunning].status, WNOHANG) != 0) {
-          processes[currentlyRunning].isCompleted = true;
-          processes[currentlyRunning].timeInSec = (double)(clock() - processes[currentlyRunning].begin) / CLOCKS_PER_SEC;
+        printf("Third check\n");
+        if (waitpid(currentlyRunning, &processes[i].status, WNOHANG) != 0) {
+            printf("Fourth check\n");
+          processes[i].isCompleted = true;
+          processes[i].timeInSec = (double)(clock() - processes[i].begin) / CLOCKS_PER_SEC;
         }
 
         break;
       }
     }
+    if (hasAllProcessesCompleted(processes, processIndex)){
+        break;
+    }
+      
     seconds += 2;
     printf("seconds: %d\n", seconds);
     printf("feof: %d\n", feof(file));
@@ -99,7 +109,7 @@ int main () {
       processIndex++;
     }
 
-    if (seconds == 6) {
+    if (seconds % 6 == 0) {
       printf("Seconds: %d\n", seconds);
       kill(currentlyRunning, SIGTSTP);
       chosenProcess = lotteryScheduler(processes, processIndex); // returns Process
@@ -187,6 +197,15 @@ int getProcessIndex(struct Process processes[], int qty, struct Process process)
   int i = 0;
   for (i = 0; i < qty; i++)
     if (processes[i].id == process.id)
+      break;
+
+  return i;
+}
+
+int getProcessWithPid(struct Process processes[], int qty, int pid){
+  int i = 0;
+  for (i = 0; i < qty; i++)
+    if (processes[i].pid == pid)
       break;
 
   return i;
