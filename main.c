@@ -37,7 +37,7 @@ int main () {
   int currentlyRunning;
   struct Process chosenProcess;
 
-  file = fopen("file.txt", "r");
+  file = fopen("input.txt", "r");
 
   if (file == NULL)
     return 1;
