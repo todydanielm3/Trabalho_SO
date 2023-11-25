@@ -1,7 +1,3 @@
-Claro, vamos comentar o código em português,
-    linha por linha :
-
-```c
 #include <stdbool.h> // Inclui definição do tipo bool para valores booleanos
 #include <stdio.h>   // Inclui a biblioteca padrão de entrada/saída
 #include <stdlib.h> // Inclui a biblioteca padrão para funções como malloc e rand
