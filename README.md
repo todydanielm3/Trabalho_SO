@@ -1,5 +1,5 @@
 # Escalonador de Loteria para Sistemas Operacionais
-## Universidade de Brasília - 02/2023
+## Universidade de Brasília
 
 ## Descrição
 Este projeto envolve a implementação de um escalonador de loteria para gerenciar processos CPU-bound em um ambiente Unix. Utiliza a linguagem C e foca em chamadas de sistema específicas.
